@@ -1,13 +1,19 @@
 <?php
+
 /**
- * Library Name: Cloud Bill Master PHP Session Handler
+ * Laika Database Session
  * Author: Showket Ahmed
- * Email: riyadhtayf@gmail.com 
+ * Email: riyadhtayf@gmail.com
+ * License: MIT
+ * This file is part of the Laika PHP MVC Framework.
+ * For the full copyright and license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace CBM\Session\Handler;
+declare(strict_types=1);
 
-use CBM\Session\Interface\SessionDriverInterface;
+namespace Laika\Session\Handler;
+
+use Laika\Session\Interface\SessionDriverInterface;
 use InvalidArgumentException;
 use RuntimeException;
 use PDO;
@@ -19,14 +25,14 @@ class PdoSessionHandler implements SessionDriverInterface
 
     public function __construct(array|PDO $config)
     {
-        if(is_array($config)){
-            if(!isset($config['dsn'])){
+        if (is_array($config)) {
+            if (!isset($config['dsn'])) {
                 throw new InvalidArgumentException("Key 'dsn' not Found!");
             }
-            if(!isset($config['username'])){
+            if (!isset($config['username'])) {
                 throw new InvalidArgumentException("Key 'username' not Found!");
             }
-            if(!isset($config['password'])){
+            if (!isset($config['password'])) {
                 throw new InvalidArgumentException("Key 'password' not Found!");
             }
 
@@ -35,11 +41,11 @@ class PdoSessionHandler implements SessionDriverInterface
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ];
             $this->pdo = new PDO($config['dsn'], $config['username'], $config['password'], $options);
-        }else{
+        } else {
             $this->pdo = $config;
         }
 
-        if(!($this->pdo instanceof PDO)){
+        if (!($this->pdo instanceof PDO)) {
             throw new RuntimeException('Invalid Instance Provided!');
         }
     }
@@ -56,10 +62,16 @@ class PdoSessionHandler implements SessionDriverInterface
     }
 
     // Session Open
-    public function open($savePath, $sessionName): bool { return true; }
+    public function open($savePath, $sessionName): bool
+    {
+        return true;
+    }
 
     // Session Close
-    public function close(): bool { return true; }
+    public function close(): bool
+    {
+        return true;
+    }
 
     // Session Read
     public function read($id): string

@@ -1,18 +1,23 @@
 <?php
+
 /**
- * Library Name: Cloud Bill Master PHP Session Handler
+ * Laika Database Session
  * Author: Showket Ahmed
- * Email: riyadhtayf@gmail.com 
+ * Email: riyadhtayf@gmail.com
+ * License: MIT
+ * This file is part of the Laika PHP MVC Framework.
+ * For the full copyright and license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace CBM\Session;
+declare(strict_types=1);
 
-use CBM\Session\Interface\SessionDriverInterface;
-use CBM\Session\Handler\MemcachedSessionHandler;
-use CBM\Session\Handler\RedisSessionHandler;
-use CBM\Session\Handler\FileSessionHandler;
-use CBM\Session\Handler\PdoSessionHandler;
-use InvalidArgumentException;
+namespace Laika\Session;
+
+use Laika\Session\Interface\SessionDriverInterface;
+use Laika\Session\Handler\MemcachedSessionHandler;
+use Laika\Session\Handler\RedisSessionHandler;
+use Laika\Session\Handler\FileSessionHandler;
+use Laika\Session\Handler\PdoSessionHandler;
 use RuntimeException;
 use Memcached;
 use Redis;
@@ -20,35 +25,29 @@ use PDO;
 
 class SessionManager
 {
-    // Session Manager Instance
-    /**
-     * @var self $instance
-     */
-    private static ?self $instance = null;
-
     // Session Handler
     /**
      * @var SessionDriverInterface $handler
      */
-    private static SessionDriverInterface $handler;
+    protected static SessionDriverInterface $handler;
 
     // Session Active Status
     /**
      * @var bool $started. Default is false
      */
-    private static bool $started = false;
+    protected static bool $started = false;
 
     // Session Options To Start
     /**
-     * @var array $options. Session Start Options
+     * @var array<string,mixed> $options. Session Start Options
      */
-    private static array $options;
+    protected static array $options;
 
     // Session Cookie Parameters
     /**
-     * @var array $cookies. Session Cookie Parameters
+     * @var array<string,mixed> $cookies. Session Cookie Parameters
      */
-    private static array $cookies;
+    protected static array $cookies;
 
 
     private function __construct()
@@ -56,25 +55,23 @@ class SessionManager
         self::$handler->setup();
     }
 
-    // Session Handler Initiate
+    // Session Handler Config
     /**
      * @param array|PDO|Redis|Memcached $config Required Argument.
      * File Session: Ignore This Parameter.
      * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
      * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
      * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
-     * @return self
+     * @return void
      */
-    public static function init(array|PDO|Redis|Memcached $config = []): self
+    public static function config(array|PDO|Redis|Memcached $config = []): void
     {
         self::boot($config);
         // Session Options
         self::$options = self::defaultOptions();
         // Session Cookies
         self::$cookies = self::defaultCookies();
-        // Get Instance
-        self::$instance ??= new self();
-        return self::$instance;
+        return;
     }
 
     // Set Session Options
@@ -83,9 +80,6 @@ class SessionManager
      */
     public static function setOptions(array $options): void
     {
-        if(!self::$instance){
-            throw new RuntimeException('Please Run SessionManager::init() First.');
-        }
         self::$options = array_merge(self::$options, $options);
     }
 
@@ -95,19 +89,13 @@ class SessionManager
      */
     public static function setCookies(array $cookies): void
     {
-        if(!self::$instance){
-            throw new RuntimeException('Please Run SessionManager::init() First.');
-        }
         self::$cookies = array_merge(self::$cookies, $cookies);
     }
 
     // Start Session
     public static function start(): void
     {
-        if(!isset(self::$handler)){
-            throw new RuntimeException("Session handler not configured. Call SessionManager::init() first.");
-        }
-        if(!self::$started && (session_status() !== PHP_SESSION_ACTIVE)){
+        if (!self::$started && (session_status() !== PHP_SESSION_ACTIVE)) {
             self::$handler->setup();
             session_set_save_handler(self::$handler, true);
 
@@ -129,9 +117,9 @@ class SessionManager
         return session_destroy();
     }
 
-    ############################################
-    ############# Internal Methods #############
-    ############################################
+    ########################################################################
+    /*--------------------------- INTERNAL API ---------------------------*/
+    ########################################################################
 
     // Boot Session Handler
     /**
@@ -142,23 +130,22 @@ class SessionManager
      * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
      * @return self
      */
-    private static function boot(array|PDO|Redis|Memcached $config): void
+    protected static function boot(array|PDO|Redis|Memcached $config): void
     {
-        if(is_array($config)){
+        if (is_array($config)) {
             $driver = strtolower($config['driver'] ?? 'file');
-        }elseif(is_object($config)){
-            if($config instanceof PDO){
+        } elseif (is_object($config)) {
+            if ($config instanceof PDO) {
                 $driver = 'pdo';
-            }elseif($config instanceof Redis){
+            } elseif ($config instanceof Redis) {
                 $driver = 'redis';
-            }elseif($config instanceof Memcached){
+            } elseif ($config instanceof Memcached) {
                 $driver = 'memcached';
-            }else{
-                $driver = get_class($config);
-                throw new InvalidArgumentException("Session Manager Initiate Failed. Unsupported Object '{$driver}' Found!");
+            } else {
+                $driver = strtolower(get_class($config));
             }
         }
-        switch($driver){
+        switch ($driver) {
             case 'file':
                 self::$handler = new FileSessionHandler($config);
                 break;
@@ -176,31 +163,35 @@ class SessionManager
                 break;
 
             default:
-                throw new InvalidArgumentException("Unsupported Session Driver: '{$driver}'");
+                throw new RuntimeException("Unsupported Session Driver: '{$driver}'");
         }
     }
 
-    // Session Options
-    private static function defaultOptions()
+    /**
+     * @return array<string,mixed> Default Session Options
+     */
+    protected static function defaultOptions(): array
     {
         return [
             'name'              =>  'CBMASTER',
-			'use_only_cookies'	=>	true,
-			'use_strict_mode'	=>	true,
-			'gc_probability'	=>	1,
-			'gc_divisor'		=>	100,
-			'gc_maxlifetime'	=>	1440
-		];
+            'use_only_cookies'	=>	true,
+            'use_strict_mode'	=>	true,
+            'gc_probability'	=>	1,
+            'gc_divisor'		=>	100,
+            'gc_maxlifetime'	=>	1440
+        ];
     }
 
-    // Session Options
-    private static function defaultCookies()
+    /**
+     * @return array<string,mixed> Default Session Cookies
+     */
+    protected static function defaultCookies(): array
     {
         return [
-			"path"      =>  '/',
-			"secure"    =>  true,
-			"httponly"  =>  true,
-			"samesite"  =>  "Strict"
-		];
+            "path"      =>  '/',
+            "secure"    =>  true,
+            "httponly"  =>  true,
+            "samesite"  =>  "Strict"
+        ];
     }
 }

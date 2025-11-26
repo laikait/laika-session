@@ -1,40 +1,61 @@
 <?php
+
 /**
- * Library Name: Cloud Bill Master PHP Session Handler
+ * Laika Database Session
  * Author: Showket Ahmed
- * Email: riyadhtayf@gmail.com 
+ * Email: riyadhtayf@gmail.com
+ * License: MIT
+ * This file is part of the Laika PHP MVC Framework.
+ * For the full copyright and license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace CBM\Session\Handler;
+declare(strict_types=1);
 
-use CBM\Session\Interface\SessionDriverInterface;
+namespace Laika\Session\Handler;
+
+use Laika\Session\Interface\SessionDriverInterface;
 
 class FileSessionHandler implements SessionDriverInterface
 {
-    // Session Save Path
+    /**
+     * Session Save Path
+     * @var string $path
+     */
     protected string $path;
-    
-    // Session File Prefix
+
+    /**
+     * Session File Prefix
+     * @var string $prefix
+     */
     protected string $prefix;
 
     public function __construct(?array $config = null)
     {
         $this->path = $config['path'] ?? session_save_path();
         $this->path = rtrim($this->path, '/\\');
-        if(!is_dir($this->path)) {
+        if (!is_dir($this->path)) {
             mkdir($this->path, 0777, true);
         }
         $this->prefix = strtoupper($config['prefix'] ?? 'CBMASTER');
     }
 
     // Setup Handler
-    public function setup(): void {}
+    public function setup(): void
+    {
+        //
+    }
 
     // Session Open
-    public function open($savePath, $sessionName): bool { return true; }
+    public function open($savePath, $sessionName): bool
+    {
+        return true;
+    }
 
     // Session Close
-    public function close(): bool { return true; }
+    public function close(): bool
+    {
+        return true;
+    }
 
     // Session Read
     public function read($id): string
@@ -61,9 +82,11 @@ class FileSessionHandler implements SessionDriverInterface
     {
         $count = 0;
         $files = glob("{$this->path}/{$this->prefix}_*");
-        foreach($files as $file){
-            if((filemtime($file) + $maxlifetime) < time()){
-                if(unlink($file)) $count++;
+        foreach ($files as $file) {
+            if ((filemtime($file) + $maxlifetime) < time()) {
+                if (unlink($file)) {
+                    $count++;
+                }
             }
         }
         return $count;

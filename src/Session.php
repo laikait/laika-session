@@ -1,11 +1,17 @@
 <?php
+
 /**
- * Library Name: Cloud Bill Master PHP Session Handler
+ * Laika Database Session
  * Author: Showket Ahmed
- * Email: riyadhtayf@gmail.com 
+ * Email: riyadhtayf@gmail.com
+ * License: MIT
+ * This file is part of the Laika PHP MVC Framework.
+ * For the full copyright and license information, please view the LICENSE file that was distributed with this source code.
  */
 
-namespace CBM\Session;
+declare(strict_types=1);
+
+namespace Laika\Session;
 
 class Session
 {
@@ -20,9 +26,11 @@ class Session
         SessionManager::start();
         $for = strtoupper($for);
 
-        if(is_string($name)) $name = [$name=>$value];
+        if (is_string($name)) {
+            $name = [$name => $value];
+        }
 
-        array_filter($name, function($val, $key) use ($for){
+        array_filter($name, function ($val, $key) use ($for) {
             $_SESSION[$for][$key] = $val;
         }, ARRAY_FILTER_USE_BOTH);
     }
@@ -61,7 +69,9 @@ class Session
     public static function pop(string $key, string $for = 'APP'): void
     {
         $for = strtoupper($for);
-        if(self::has($key, $for)) unset($_SESSION[$for][$key]);
+        if (self::has($key, $for)) {
+            unset($_SESSION[$for][$key]);
+        }
     }
 
     // Get All Session Key & Values
