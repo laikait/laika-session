@@ -1,5 +1,5 @@
 {
-    "name": "cb-master/php-session-handler",
+    "name": "laikait/laika-session",
     "description": "A php singleton file,pdo,redis or memcached session handler.",
     "keywords": ["php", "session", "singleton", "redis", "pdo", "memcached", "handler"],
     "type": "library",
