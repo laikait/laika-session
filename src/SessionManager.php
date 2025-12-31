@@ -173,7 +173,7 @@ class SessionManager
     protected static function defaultOptions(): array
     {
         return [
-            'name'              =>  'CBMASTER',
+            'name'              =>  'LAIKA',
             'use_only_cookies'	=>	true,
             'use_strict_mode'	=>	true,
             'gc_probability'	=>	1,
