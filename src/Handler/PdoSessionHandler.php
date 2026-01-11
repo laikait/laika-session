@@ -56,7 +56,7 @@ class PdoSessionHandler implements SessionDriverInterface
         $sql = "CREATE TABLE IF NOT EXISTS `sessions` (
             `id` VARCHAR(128) PRIMARY KEY,
             `data` BLOB,
-            `timestamp` INT
+            `created` INT
         )";
         $this->pdo->exec($sql);
     }
@@ -84,7 +84,7 @@ class PdoSessionHandler implements SessionDriverInterface
     // Session Write
     public function write($id, $data): bool
     {
-        $stmt = $this->pdo->prepare("REPLACE INTO sessions (id, data, timestamp) VALUES (?, ?, ?)");
+        $stmt = $this->pdo->prepare("REPLACE INTO sessions (id, data, created) VALUES (?, ?, ?)");
         return $stmt->execute([$id, $data, time()]);
     }
 
@@ -99,7 +99,7 @@ class PdoSessionHandler implements SessionDriverInterface
     // Session Garbase Collection
     public function gc($maxlifetime): int|false
     {
-        $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE timestamp < ?");
+        $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE created < ?");
         $stmt->execute([time() - $maxlifetime]);
         return $stmt->rowCount();
     }
