@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -14,31 +13,19 @@ declare(strict_types=1);
 namespace Laika\Session\Handler;
 
 use Laika\Session\Interface\SessionDriverInterface;
-use RuntimeException;
 use Memcached;
 
 class MemcachedSessionHandler implements SessionDriverInterface
 {
     protected Memcached $memcached;
 
-    public function __construct(array|Memcached $config)
+    protected int $ttl;
+
+    public function __construct(Memcached $instance, array $args)
     {
-        if (is_array($config)) {
-            $config['host'] ??= '127.0.0.1';
-            $config['port'] ??= 11211;
-            $config['prefix'] ??= 'CBMASTER';
-            // Remove All Special Characters
-            $config['prefix'] = strtoupper(preg_replace('/[^a-zA-Z_]/', '', $config['prefix']));
-            try {
-                $this->memcached = new Memcached();
-                $this->memcached->addServer($config['host'], $config['port']);
-                $this->memcached->setOption(Memcached::OPT_PREFIX_KEY, $config['prefix']);
-            } catch (RuntimeException $e) {
-                throw $e;
-            }
-        } else {
-            $this->memcached = $config;
-        }
+        $this->memcached = clone $instance;
+        $this->memcached->setOption(Memcached::OPT_PREFIX_KEY, $args['prefix'] ?? 'LK');
+        $this->ttl = (int)($args['gc_maxlifetime'] ?? ini_get('session.gc_maxlifetime') ?: 1440);
     }
 
     // Session Handler Setup
@@ -68,7 +55,7 @@ class MemcachedSessionHandler implements SessionDriverInterface
     // Session Write
     public function write($id, $data): bool
     {
-        return $this->memcached->set($id, $data);
+        return $this->memcached->set($id, $data, $this->ttl);
     }
 
     // Session Destroy
@@ -78,7 +65,7 @@ class MemcachedSessionHandler implements SessionDriverInterface
         return true;
     }
 
-    // Session Garbase Collection
+    // Session Garbage Collection
     public function gc($maxlifetime): int
     {
         return 0;

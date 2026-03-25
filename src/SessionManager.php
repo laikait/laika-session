@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Laika Database Session
  * Author: Showket Ahmed
@@ -13,12 +12,12 @@ declare(strict_types=1);
 
 namespace Laika\Session;
 
+use Laika\Session\Exceptions\SessionHandlerException;
 use Laika\Session\Interface\SessionDriverInterface;
 use Laika\Session\Handler\MemcachedSessionHandler;
 use Laika\Session\Handler\RedisSessionHandler;
 use Laika\Session\Handler\FileSessionHandler;
 use Laika\Session\Handler\PdoSessionHandler;
-use RuntimeException;
 use Memcached;
 use Redis;
 use PDO;
@@ -49,27 +48,29 @@ class SessionManager
      */
     protected static array $cookies;
 
-
-    private function __construct()
-    {
-        self::$handler->setup();
-    }
-
     // Session Handler Config
     /**
-     * @param array|PDO|Redis|Memcached $config Required Argument.
+     * @param null|PDO|Redis|Memcached $instance
+     * @param array $args Example: ['path' => '/session_path/', 'prefix' => 'LK']
      * File Session: Ignore This Parameter.
      * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
      * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
      * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
      * @return void
      */
-    public static function config(array|PDO|Redis|Memcached $config = []): void
+    public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
     {
-        self::boot($config);
-        // Session Options
+        // self::boot($config);
+        self::$handler = match (true) {
+            $instance instanceof PDO        =>  new PdoSessionHandler($instance),
+            $instance instanceof Redis      =>  new RedisSessionHandler($instance, $args),
+            $instance instanceof Memcached  =>  new MemcachedSessionHandler($instance, $args),
+            default                         =>  new FileSessionHandler($args)
+        };
+
+        // Default Session Options
         self::$options = self::defaultOptions();
-        // Session Cookies
+        // Default Session Cookies
         self::$cookies = self::defaultCookies();
         return;
     }
@@ -80,7 +81,11 @@ class SessionManager
      */
     public static function setOptions(array $options): void
     {
+        if (!isset(self::$options)) {
+            throw new SessionHandlerException('Call SessionManager::config() Before Set Options.');
+        }
         self::$options = array_merge(self::$options, $options);
+        return;
     }
 
     // Set Session Cookies
@@ -89,12 +94,19 @@ class SessionManager
      */
     public static function setCookies(array $cookies): void
     {
+        if (!isset(self::$options)) {
+            throw new SessionHandlerException('Call SessionManager::config() Before Set Cookies.');
+        }
         self::$cookies = array_merge(self::$cookies, $cookies);
+        return;
     }
 
     // Start Session
     public static function start(): void
     {
+        if (!isset(self::$handler)) {
+            throw new SessionHandlerException('Call SessionManager::config() before starting the session.');
+        }
         if (!self::$started && (session_status() !== PHP_SESSION_ACTIVE)) {
             self::$handler->setup();
             session_set_save_handler(self::$handler, true);
@@ -106,6 +118,7 @@ class SessionManager
             session_start(self::$options);
             self::$started = true;
         }
+        return;
     }
 
     // Session End
@@ -120,52 +133,6 @@ class SessionManager
     ########################################################################
     /*--------------------------- INTERNAL API ---------------------------*/
     ########################################################################
-
-    // Boot Session Handler
-    /**
-     * @param array|PDO|Redis|Memcached $config Required Argument.
-     * File Session: Ignore This Parameter.
-     * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
-     * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
-     * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
-     * @return self
-     */
-    protected static function boot(array|PDO|Redis|Memcached $config): void
-    {
-        if (is_array($config)) {
-            $driver = strtolower($config['driver'] ?? 'file');
-        } elseif (is_object($config)) {
-            if ($config instanceof PDO) {
-                $driver = 'pdo';
-            } elseif ($config instanceof Redis) {
-                $driver = 'redis';
-            } elseif ($config instanceof Memcached) {
-                $driver = 'memcached';
-            } else {
-                $driver = strtolower(get_class($config));
-            }
-        }
-        switch ($driver) {
-            case 'file':
-                self::$handler = new FileSessionHandler($config);
-                break;
-
-            case 'pdo':
-                self::$handler = new PdoSessionHandler($config);
-                break;
-
-            case 'redis':
-                self::$handler = new RedisSessionHandler($config);
-                break;
-
-            case 'memcached':
-                self::$handler = new MemcachedSessionHandler($config);
-                break;
-
-            default:
-                throw new RuntimeException("Unsupported Session Driver: '{$driver}'");
-        }
-    }
 
     /**
      * @return array<string,mixed> Default Session Options

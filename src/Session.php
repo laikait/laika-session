@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -30,9 +29,9 @@ class Session
             $name = [$name => $value];
         }
 
-        array_filter($name, function ($val, $key) use ($for) {
-            $_SESSION[$for][$key] = $val;
-        }, ARRAY_FILTER_USE_BOTH);
+        foreach ($name as $k => $v) {
+            $_SESSION[$for][$k] = $v;
+        }
     }
 
     // Get Session Value From Key

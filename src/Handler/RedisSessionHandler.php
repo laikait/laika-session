@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -14,44 +13,19 @@ declare(strict_types=1);
 namespace Laika\Session\Handler;
 
 use Laika\Session\Interface\SessionDriverInterface;
-use InvalidArgumentException;
-use RuntimeException;
-use Exception;
 use Redis;
 
 class RedisSessionHandler implements SessionDriverInterface
 {
     protected Redis $redis;
 
-    public function __construct(array|Redis $config)
+    protected int $ttl;
+
+    public function __construct(Redis $instance, array $args)
     {
-        if (is_array($config)) {
-            $config['host'] ??= '127.0.0.1';
-            $config['port'] ??= 6379;
-            $config['timeout'] ??= 2.0;
-            $config['prefix'] ??= 'CBMASTER';
-            $config['prefix'] = strtoupper(preg_replace('/[^a-zA-Z_]/', '', $config['prefix']));
-            try {
-                $this->redis = new Redis();
-                $this->redis->connect($config['host'], (int)$config['port'], (float)$config['timeout']);
-            } catch (InvalidArgumentException $e) {
-                throw $e;
-            }
-            // Set Auth if Password Exist
-            if (isset($config['password']) && $config['password']) {
-                try {
-                    $this->redis->auth($config['password']);
-                } catch (Exception $e) {
-                    throw $e;
-                }
-            }
-            $this->redis->setOption(Redis::OPT_PREFIX, $config['prefix']);
-        } else {
-            $this->redis = $config;
-        }
-        if (!($this->redis instanceof Redis)) {
-            throw new RuntimeException('Invalid Instance Provided!');
-        }
+        $this->redis = clone $instance;
+        $this->redis->setOption(Redis::OPT_PREFIX, $args['prefix'] ?? 'LK');
+        $this->ttl = (int)($args['gc_maxlifetime'] ?? ini_get('session.gc_maxlifetime') ?: 1440);
     }
 
     // Session Handler Setup
@@ -81,7 +55,7 @@ class RedisSessionHandler implements SessionDriverInterface
     // Session Write
     public function write($id, $data): bool
     {
-        return $this->redis->set($id, $data);
+        return $this->redis->setex($id, $this->ttl, $data);
     }
 
     // Session Destroy
@@ -91,7 +65,7 @@ class RedisSessionHandler implements SessionDriverInterface
         return true;
     }
 
-    // Session Garbase Collection
+    // Session Garbage Collection
     public function gc($maxlifetime): int
     {
         return 0;
