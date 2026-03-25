@@ -10,12 +10,6 @@
 
 declare(strict_types=1);
 
-namespace Laika\Session\Interface;
+namespace Laika\Session\Exceptions;
 
-use SessionHandlerInterface;
-
-// Session Driver Interface
-interface SessionDriverInterface extends SessionHandlerInterface
-{
-    public function setup(): void;
-}
+class SessionHandlerException extends \RuntimeException{}

@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -29,14 +28,14 @@ class FileSessionHandler implements SessionDriverInterface
      */
     protected string $prefix;
 
-    public function __construct(?array $config = null)
+    public function __construct(array $args)
     {
-        $this->path = $config['path'] ?? session_save_path();
+        $this->path = $args['path'] ?? session_save_path();
         $this->path = rtrim($this->path, '/\\');
         if (!is_dir($this->path)) {
-            mkdir($this->path, 0777, true);
+            mkdir($this->path, 0700, true);
         }
-        $this->prefix = strtoupper($config['prefix'] ?? 'CBMASTER');
+        $this->prefix = strtoupper($args['prefix'] ?? 'LK');
     }
 
     // Setup Handler

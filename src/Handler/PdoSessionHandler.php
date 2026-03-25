@@ -1,7 +1,6 @@
 <?php
-
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -14,8 +13,6 @@ declare(strict_types=1);
 namespace Laika\Session\Handler;
 
 use Laika\Session\Interface\SessionDriverInterface;
-use InvalidArgumentException;
-use RuntimeException;
 use PDO;
 
 class PdoSessionHandler implements SessionDriverInterface
@@ -23,31 +20,9 @@ class PdoSessionHandler implements SessionDriverInterface
     // PDO Instance
     protected PDO $pdo;
 
-    public function __construct(array|PDO $config)
+    public function __construct(PDO $pdo)
     {
-        if (is_array($config)) {
-            if (!isset($config['dsn'])) {
-                throw new InvalidArgumentException("Key 'dsn' not Found!");
-            }
-            if (!isset($config['username'])) {
-                throw new InvalidArgumentException("Key 'username' not Found!");
-            }
-            if (!isset($config['password'])) {
-                throw new InvalidArgumentException("Key 'password' not Found!");
-            }
-
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ];
-            $this->pdo = new PDO($config['dsn'], $config['username'], $config['password'], $options);
-        } else {
-            $this->pdo = $config;
-        }
-
-        if (!($this->pdo instanceof PDO)) {
-            throw new RuntimeException('Invalid Instance Provided!');
-        }
+        $this->pdo = $pdo;
     }
 
     // Session Handler Setup
@@ -56,7 +31,7 @@ class PdoSessionHandler implements SessionDriverInterface
         $sql = "CREATE TABLE IF NOT EXISTS `sessions` (
             `id` VARCHAR(128) PRIMARY KEY,
             `data` BLOB,
-            `created` INT
+            `last_activity` INT
         )";
         $this->pdo->exec($sql);
     }
@@ -84,7 +59,7 @@ class PdoSessionHandler implements SessionDriverInterface
     // Session Write
     public function write($id, $data): bool
     {
-        $stmt = $this->pdo->prepare("REPLACE INTO sessions (id, data, created) VALUES (?, ?, ?)");
+        $stmt = $this->pdo->prepare("INSERT INTO sessions (id, data, `last_activity`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE data = VALUES(data), `last_activity` = VALUES(`last_activity`)");
         return $stmt->execute([$id, $data, time()]);
     }
 
@@ -99,7 +74,7 @@ class PdoSessionHandler implements SessionDriverInterface
     // Session Garbase Collection
     public function gc($maxlifetime): int|false
     {
-        $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE created < ?");
+        $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE last_activity < ?");
         $stmt->execute([time() - $maxlifetime]);
         return $stmt->rowCount();
     }
