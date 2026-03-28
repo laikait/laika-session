@@ -14,8 +14,8 @@ namespace Laika\Session;
 
 class Session
 {
-    // Set Session Key & Values
     /**
+     * Set Session Key & Values
      * @param string|array $name Required Argument as key name or array with key & value
      * @param mixed $value Optional Argument. If $name is string this Param is Required.
      * @param string $for Optional Argument. It Will Store Data Like $_SESSION[$for][$name].
@@ -34,21 +34,22 @@ class Session
         }
     }
 
-    // Get Session Value From Key
     /**
+     * Get Session Value From Key
      * @param string $key Required Argument
      * @param string $for Optional Argument. It Will Get Data From $_SESSION[$for][$key].
+     * @param mixed $default Default Value To Return. Default is null
      * @return mixed
      */
-    public static function get(string $key, string $for = 'APP'): mixed
+    public static function get(string $key, string $for = 'APP', mixed $default = null): mixed
     {
         SessionManager::start();
         $for = strtoupper($for);
-        return $_SESSION[$for][$key] ?? null;
+        return $_SESSION[$for][$key] ?? $default;
     }
 
-    // Check Session Key Exist
     /**
+     * Check Session Key Exist
      * @param string $key Required Argument
      * @param string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
      * @return bool
@@ -60,8 +61,8 @@ class Session
         return isset($_SESSION[$for][$key]);
     }
 
-    // Remove Session Key if Exist
     /**
+     * Remove Session Key if Exist
      * @param string $key Required Argument
      * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
      */
@@ -73,8 +74,8 @@ class Session
         }
     }
 
-    // Get All Session Key & Values
     /**
+     * Get All Session Key & Values
      * @param string $key Required Argument
      * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
      * @return array
@@ -85,8 +86,8 @@ class Session
         return $_SESSION;
     }
 
-    // Regenerate Session ID
     /**
+     * Regenerate Session ID
      * @param bool $deleteOldData Optional Argument. Default is true
      * @return bool
      */
@@ -96,8 +97,8 @@ class Session
         return session_regenerate_id($deleteOldData);
     }
 
-    // Destroy Session
     /**
+     * Destroy Session
      * @return bool
      */
     public static function end(): bool
@@ -105,8 +106,8 @@ class Session
         return SessionManager::end();
     }
 
-    // Get Session ID
     /**
+     * Get Session ID
      * @return string
      */
     public static function id(): string
@@ -115,8 +116,8 @@ class Session
         return session_id();
     }
 
-    // Get Session Name
     /**
+     * Get Session Name
      * @return string
      */
     public static function name(): string
