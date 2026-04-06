@@ -12,25 +12,77 @@ declare(strict_types=1);
 
 namespace Laika\Session;
 
+use PDO;
+use Redis;
+use Memcached;
+
 class Session
 {
+    /** @var string $for Session For */
+    protected string $for = 'APP';
+
+    /**
+     * Set Session For
+     * @param ?string $for
+     * @return string
+     */
+    public static function for(?string $for = null): string
+    {
+        if ($for !== null) self::$for = strtoupper(trim($for));
+        return self::$for;
+
+    }
+
+    /**
+     * Session Config
+     * @param null|PDO|Redis|Memcached $instance
+     * @param array $args Example: ['path' => '/session_path/', 'prefix' => 'LK']
+     * File Session: Ignore This Parameter.
+     * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
+     * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
+     * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
+     * @return void
+     */
+    public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
+    {
+        SessionManager::config($instance, $args);
+    }
+
+    /**
+     * Set Session Options
+     * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
+     * @return void
+     */
+    public static function setOptions(array $options): void
+    {
+        SessionManager::setOptions($options);
+    }
+
+    /**
+     * Set Session Cookies
+     * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
+     * @return void
+     */
+    public static function setCookies(array $cookies): void
+    {
+        SessionManager::setCookies($cookies);
+    }
+
     /**
      * Set Session Key & Values
      * @param string|array $name Required Argument as key name or array with key & value
      * @param mixed $value Optional Argument. If $name is string this Param is Required.
-     * @param string $for Optional Argument. It Will Store Data Like $_SESSION[$for][$name].
+     * @return void
      */
-    public static function set(string|array $name, mixed $value = null, string $for = 'APP'): void
+    public static function set(string|array $name, mixed $value = null): void
     {
         SessionManager::start();
-        $for = strtoupper($for);
-
         if (is_string($name)) {
             $name = [$name => $value];
         }
 
         foreach ($name as $k => $v) {
-            $_SESSION[$for][$k] = $v;
+            $_SESSION[self::$for][$k] = $v;
         }
     }
 
@@ -41,34 +93,34 @@ class Session
      * @param mixed $default Default Value To Return. Default is null
      * @return mixed
      */
-    public static function get(string $key, string $for = 'APP', mixed $default = null): mixed
+    public static function get(string $key, mixed $default = null): mixed
     {
         SessionManager::start();
-        $for = strtoupper($for);
-        return $_SESSION[$for][$key] ?? $default;
+        return $_SESSION[self::$for][$key] ?? $default;
     }
 
     /**
      * Check Session Key Exist
      * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
+     * @param ?string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
      * @return bool
      */
-    public static function has(string $key, string $for = 'APP'): bool
+    public static function has(string $key, ?string $for = null): bool
     {
         SessionManager::start();
-        $for = strtoupper($for);
+        $for = $for ? strtoupper($for) : self::$for;
         return isset($_SESSION[$for][$key]);
     }
 
     /**
      * Remove Session Key if Exist
      * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
+     * @param ?string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
+     * @return void
      */
-    public static function pop(string $key, string $for = 'APP'): void
+    public static function pop(string $key, ?string $for = null): void
     {
-        $for = strtoupper($for);
+        $for = $for ? strtoupper($for) : self::$for;
         if (self::has($key, $for)) {
             unset($_SESSION[$for][$key]);
         }
@@ -76,8 +128,6 @@ class Session
 
     /**
      * Get All Session Key & Values
-     * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
      * @return array
      */
     public static function all(): array
