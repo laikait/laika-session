@@ -42,14 +42,14 @@ class SessionManager
      */
     protected static array $options;
 
-    // Session Cookie Parameters
     /**
+     * Session Cookie Parameters
      * @var array<string,mixed> $cookies. Session Cookie Parameters
      */
     protected static array $cookies;
 
-    // Session Handler Config
     /**
+     * Session Handler Config
      * @param null|PDO|Redis|Memcached $instance
      * @param array $args Example: ['path' => '/session_path/', 'prefix' => 'LK']
      * File Session: Ignore This Parameter.
@@ -60,7 +60,6 @@ class SessionManager
      */
     public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
     {
-        // self::boot($config);
         self::$handler = match (true) {
             $instance instanceof PDO        =>  new PdoSessionHandler($instance),
             $instance instanceof Redis      =>  new RedisSessionHandler($instance, $args),
@@ -75,8 +74,8 @@ class SessionManager
         return;
     }
 
-    // Set Session Options
     /**
+     * Set Session Options
      * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
      */
     public static function setOptions(array $options): void
