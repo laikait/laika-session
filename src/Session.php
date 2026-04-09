@@ -19,7 +19,7 @@ use Memcached;
 class Session
 {
     /** @var string $for Session For */
-    protected string $for = 'APP';
+    protected static string $for = 'APP';
 
     /**
      * Set Session For
