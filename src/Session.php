@@ -60,7 +60,7 @@ class Session
 
     /**
      * Set Session Cookies
-     * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
+     * @param array $cookies. Example ['name'=>'PHPSESSID'] and any other session options
      * @return void
      */
     public static function setCookies(array $cookies): void
@@ -89,7 +89,6 @@ class Session
     /**
      * Get Session Value From Key
      * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Get Data From $_SESSION[$for][$key].
      * @param mixed $default Default Value To Return. Default is null
      * @return mixed
      */

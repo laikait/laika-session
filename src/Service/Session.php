@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace Laika\Session\Relay;
+namespace Laika\Session\Service;
 
 use Laika\Core\Relay\Relay;
 

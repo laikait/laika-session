@@ -27,7 +27,7 @@
     "extra": {
         "laika": {
             "providers": [
-                "Laika\\Session\\Provider\\SessionProvider"
+                "Laika\\Session\\Relay\\SessionRelay"
             ]
         }
     }

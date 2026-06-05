@@ -10,12 +10,12 @@
 
 declare(strict_types=1);
 
-namespace Laika\Session\Provider;
+namespace Laika\Session\Relay;
 
 use Laika\Session\Session;
 use Laika\Core\Relay\RelayProvider;
 
-class SessionProvider extends RelayProvider
+class SessionRelay extends RelayProvider
 {
     public function register(): void
     {
