@@ -121,7 +121,7 @@ class SessionManager
     }
 
     // Session End
-    public static function end(): bool
+    public static function destroy(): bool
     {
         self::start();
         session_unset();
