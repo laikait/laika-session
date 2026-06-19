@@ -18,21 +18,10 @@ use Memcached;
 
 class Session
 {
-    /** @var string $for Session For */
-    protected static string $for = 'APP';
 
-    /**
-     * Set Session For
-     * @param ?string $for
-     * @return string
-     */
-    public static function for(?string $for = null): string
-    {
-        if ($for !== null) self::$for = strtoupper(trim($for));
-        return self::$for;
-
-    }
-
+     ##################################################################################
+     ################################### PUBLIC API ###################################
+     ##################################################################################
     /**
      * Session Config
      * @param null|PDO|Redis|Memcached $instance
@@ -70,19 +59,21 @@ class Session
 
     /**
      * Set Session Key & Values
-     * @param string|array $name Required Argument as key name or array with key & value
+     * @param string|array $key Required Argument as key name or array with key & value
      * @param mixed $value Optional Argument. If $name is string this Param is Required.
+     * @param string $for Optional Argument. It Will Set Data Like $_SESSION[$for][$key]. Default is 'APP'
      * @return void
      */
-    public static function set(string|array $name, mixed $value = null): void
+    public static function set(string|array $key, mixed $value = null, string $for = 'APP'): void
     {
         SessionManager::start();
-        if (is_string($name)) {
-            $name = [$name => $value];
+        if (is_string($key)) {
+            $arr = [$key => $value];
         }
 
-        foreach ($name as $k => $v) {
-            $_SESSION[self::$for][$k] = $v;
+        $for = strtoupper(trim($for));
+        foreach ($arr as $k => $v) {
+            $_SESSION[$for][$k] = $v;
         }
     }
 
@@ -90,38 +81,53 @@ class Session
      * Get Session Value From Key
      * @param string $key Required Argument
      * @param mixed $default Default Value To Return. Default is null
+     * @param string $for Optional Argument. It Will Get Data Like $_SESSION[$for][$key]. Default is 'APP'
      * @return mixed
      */
-    public static function get(string $key, mixed $default = null): mixed
+    public static function get(string $key, mixed $default = null, string $for = 'APP'): mixed
     {
         SessionManager::start();
-        return $_SESSION[self::$for][$key] ?? $default;
+        $for = strtoupper(trim($for));
+        return $_SESSION[$for][$key] ?? $default;
     }
 
     /**
      * Check Session Key Exist
      * @param string $key Required Argument
-     * @param ?string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
+     * @param string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
      * @return bool
      */
-    public static function has(string $key, ?string $for = null): bool
+    public static function has(string $key, string $for = 'APP'): bool
     {
         SessionManager::start();
-        $for = $for ? strtoupper($for) : self::$for;
+        $for = strtoupper(trim($for));
         return isset($_SESSION[$for][$key]);
     }
 
     /**
      * Remove Session Key if Exist
      * @param string $key Required Argument
-     * @param ?string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
+     * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
      * @return void
      */
-    public static function pop(string $key, ?string $for = null): void
+    public static function pop(string $key, string $for = 'APP'): void
     {
-        $for = $for ? strtoupper($for) : self::$for;
+        $for = strtoupper(trim($for));
         if (self::has($key, $for)) {
             unset($_SESSION[$for][$key]);
+        }
+    }
+
+    /**
+     * Session Purge
+     * @param string $for Optional Argument. It Will Purge Data Like $_SESSION[$for]. Default is 'APP'
+     * @return void
+     */
+    public static function purge(string $for = 'APP'): void
+    {
+        $for = strtoupper(trim($for));
+        if (isset($_SESSION[$for])) {
+            unset($_SESSION[$for]);
         }
     }
 
@@ -150,9 +156,9 @@ class Session
      * Destroy Session
      * @return bool
      */
-    public static function end(): bool
+    public static function destroy(): bool
     {
-        return SessionManager::end();
+        return SessionManager::destroy();
     }
 
     /**

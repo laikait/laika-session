@@ -24,28 +24,19 @@ use PDO;
 
 class SessionManager
 {
-    // Session Handler
-    /**
-     * @var SessionDriverInterface $handler
-     */
+    /** @var SessionDriverInterface $handler */
     protected static SessionDriverInterface $handler;
 
-    // Session Active Status
-    /**
-     * @var bool $started. Default is false
-     */
+    /** @var bool $started. Default is false */
     protected static bool $started = false;
 
-    // Session Options To Start
-    /**
-     * @var array<string,mixed> $options. Session Start Options
-     */
+    /** @var bool $configuared. Default is false */
+    protected static bool $configuared = false;
+
+    /** @var array<string,mixed> $options. Session Start Options */
     protected static array $options;
 
-    /**
-     * Session Cookie Parameters
-     * @var array<string,mixed> $cookies. Session Cookie Parameters
-     */
+    /** @var array<string,mixed> $cookies. Session Cookie Parameters */
     protected static array $cookies;
 
     /**
@@ -60,6 +51,8 @@ class SessionManager
      */
     public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
     {
+        if (self::$configuared) return;
+
         self::$handler = match (true) {
             $instance instanceof PDO        =>  new PdoSessionHandler($instance),
             $instance instanceof Redis      =>  new RedisSessionHandler($instance, $args),
@@ -71,6 +64,7 @@ class SessionManager
         self::$options = self::defaultOptions();
         // Default Session Cookies
         self::$cookies = self::defaultCookies();
+        self::$configuared = true;
         return;
     }
 
@@ -121,7 +115,7 @@ class SessionManager
     }
 
     // Session End
-    public static function end(): bool
+    public static function destroy(): bool
     {
         self::start();
         session_unset();

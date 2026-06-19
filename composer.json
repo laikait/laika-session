@@ -26,9 +26,11 @@
     "prefer-stable": true,
     "extra": {
         "laika": {
-            "providers": [
+            "relays": [
                 "Laika\\Session\\Relay\\SessionRelay"
-            ]
+            ],
+            "migration": true,
+            "model": true
         }
     }
 }
