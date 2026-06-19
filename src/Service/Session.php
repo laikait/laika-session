@@ -18,7 +18,7 @@ use Laika\Core\Relay\Relay;
  * @method static void      config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK'])
  * @method static void      setOptions(array $options)
  * @method static void      setCookies(array $cookies)
- * @method static void      set(string|array $name, mixed $value = null, string $for = 'APP')
+ * @method static void      set(string|array $key, mixed $value = null, string $for = 'APP')
  * @method static mixed     get(string $key, mixed $default = null, string $for = 'APP')
  * @method static bool      has(string $key, string $for = 'APP')
  * @method static void      pop(string $key, string $for = 'APP')

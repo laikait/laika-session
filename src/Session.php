@@ -59,20 +59,20 @@ class Session
 
     /**
      * Set Session Key & Values
-     * @param string|array $name Required Argument as key name or array with key & value
+     * @param string|array $key Required Argument as key name or array with key & value
      * @param mixed $value Optional Argument. If $name is string this Param is Required.
      * @param string $for Optional Argument. It Will Set Data Like $_SESSION[$for][$key]. Default is 'APP'
      * @return void
      */
-    public static function set(string|array $name, mixed $value = null, string $for = 'APP'): void
+    public static function set(string|array $key, mixed $value = null, string $for = 'APP'): void
     {
         SessionManager::start();
-        if (is_string($name)) {
-            $name = [$name => $value];
+        if (is_string($key)) {
+            $arr = [$key => $value];
         }
 
         $for = strtoupper(trim($for));
-        foreach ($name as $k => $v) {
+        foreach ($arr as $k => $v) {
             $_SESSION[$for][$k] = $v;
         }
     }
