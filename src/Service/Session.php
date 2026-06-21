@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Laika\Session\Service;
 
-use Laika\Core\Relay\Relay;
+use Laika\Relay\Relay;
 
 /**
  * @method static void      config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK'])
