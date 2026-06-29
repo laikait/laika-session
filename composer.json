@@ -29,7 +29,7 @@
             "relays": [
                 "Laika\\Session\\Relay\\SessionRelay"
             ],
-            "migration": true,
+            "schema": true,
             "model": true
         }
     }
