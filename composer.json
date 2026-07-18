@@ -5,6 +5,9 @@
     "type": "library",
     "license": "MIT",
     "autoload": {
+        "files": [
+            "helpers/loader.php"
+        ],
         "psr-4": {
             "Laika\\Session\\": "src/"
         }
@@ -28,9 +31,7 @@
         "laika": {
             "relays": [
                 "Laika\\Session\\Relay\\SessionRelay"
-            ],
-            "schema": true,
-            "model": true
+            ]
         }
     }
 }
