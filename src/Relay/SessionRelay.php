@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Laika\Session\Relay;
 
 use Laika\Session\Session;
+use Laika\Session\SessionManager;
 use Laika\Relay\RelayProvider;
 
 class SessionRelay extends RelayProvider
@@ -20,5 +21,6 @@ class SessionRelay extends RelayProvider
     public function register(): void
     {
         $this->registry->singleton('session', Session::class);
+        $this->registry->singleton('session.manager', SessionManager::class);
     }
 }

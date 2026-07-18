@@ -10,8 +10,15 @@
 
 declare(strict_types=1);
 
-use Laika\Core\App\Resource;
+namespace Laika\Session\Model;
 
-// Register Schema and Model
-Resource::register('schemas', __DIR__ . '/../src/Schema', "Laika\\Session");
-Resource::register('models', __DIR__ . '/../src/Model', "Laika\\Session");
+use Laika\Model\Model;
+
+class SessionModel extends Model
+{
+    /** @var string Table Name */
+    protected string $table = 'sessions';
+
+    /** @var string Primary Column Name */
+    protected string $id = 'id';
+}

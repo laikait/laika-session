@@ -12,15 +12,10 @@ declare(strict_types=1);
 
 namespace Laika\Session;
 
-use Laika\Session\Exceptions\SessionHandlerException;
+use Laika\Session\Handler\PDOHandler;
+use Laika\Session\Handler\FileHandler;
 use Laika\Session\Interface\SessionDriverInterface;
-use Laika\Session\Handler\MemcachedSessionHandler;
-use Laika\Session\Handler\RedisSessionHandler;
-use Laika\Session\Handler\FileSessionHandler;
-use Laika\Session\Handler\PdoSessionHandler;
-use Memcached;
-use Redis;
-use PDO;
+use Laika\Session\Exceptions\SessionHandlerException;
 
 class SessionManager
 {
@@ -40,25 +35,40 @@ class SessionManager
     protected static array $cookies;
 
     /**
-     * Session Handler Config
-     * @param null|PDO|Redis|Memcached $instance
-     * @param array $args Example: ['path' => '/session_path/', 'prefix' => 'LK']
+     * Session Config File Handler
+     * @param array $params Example: ['path' => '/session_path/', 'prefix' => 'LK']
      * File Session: Ignore This Parameter.
-     * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
-     * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
-     * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
      * @return void
      */
-    public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
+    public static function fileSessionConfig(array $params = []): void
+    {
+        if (self::$configuared) return;
+        
+        $params = array_merge(['prefix' => 'LK'], $params);
+
+        // Set Session Handler
+        self::$handler = new FileHandler($params);
+
+        // Default Session Options
+        self::$options = self::defaultOptions();
+        // Default Session Cookies
+        self::$cookies = self::defaultCookies();
+        self::$configuared = true;
+        return;
+    }
+
+    /**
+     * Session Config Database Handler
+     * @param ?string $connection Connection name. Example: null / 'default'
+     * File Session: Ignore This Parameter.
+     * @return void
+     */
+    public static function dbSessionConfig(?string $connection): void
     {
         if (self::$configuared) return;
 
-        self::$handler = match (true) {
-            $instance instanceof PDO        =>  new PdoSessionHandler($instance),
-            $instance instanceof Redis      =>  new RedisSessionHandler($instance, $args),
-            $instance instanceof Memcached  =>  new MemcachedSessionHandler($instance, $args),
-            default                         =>  new FileSessionHandler($args)
-        };
+        // Set Session Handler
+        self::$handler = new PDOHandler($connection);
 
         // Default Session Options
         self::$options = self::defaultOptions();

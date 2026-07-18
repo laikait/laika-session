@@ -13,8 +13,9 @@ declare(strict_types=1);
 namespace Laika\Session\Handler;
 
 use Laika\Session\Interface\SessionDriverInterface;
+use Laika\Session\Exceptions\SessionHandlerException;
 
-class FileSessionHandler implements SessionDriverInterface
+class FileHandler implements SessionDriverInterface
 {
     /**
      * Session Save Path
@@ -28,14 +29,16 @@ class FileSessionHandler implements SessionDriverInterface
      */
     protected string $prefix;
 
-    public function __construct(array $args)
+    public function __construct(array $params)
     {
-        $this->path = $args['path'] ?? session_save_path();
-        $this->path = rtrim($this->path, '/\\');
+        $this->path = $params['path'] ?? session_save_path();
+        $this->path = realpath(rtrim($this->path, '/\\'));
+        // Validate Path is a Directory
         if (!is_dir($this->path)) {
-            mkdir($this->path, 0700, true);
+            throw new SessionHandlerException("Session path [{$this->path}] is invalid or doesn't exists!!");
         }
-        $this->prefix = strtoupper($args['prefix'] ?? 'LK');
+
+        $this->prefix = strtoupper($params['prefix'] ?? 'LK');
     }
 
     // Setup Handler
