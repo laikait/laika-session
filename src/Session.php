@@ -12,51 +12,11 @@ declare(strict_types=1);
 
 namespace Laika\Session;
 
-use PDO;
-use Redis;
-use Memcached;
-
 class Session
 {
-
      ##################################################################################
      ################################### PUBLIC API ###################################
      ##################################################################################
-    /**
-     * Session Config
-     * @param null|PDO|Redis|Memcached $instance
-     * @param array $args Example: ['path' => '/session_path/', 'prefix' => 'LK']
-     * File Session: Ignore This Parameter.
-     * PDO Session: PDO Object or ['driver'=>'pdo'] and dsn,username,password Keys are Required
-     * Redis Session: Redis Object or ['driver'=>'redis']. host,port,timeout,prefix,password Keys are Optional
-     * Memcached Session: Memcached Object or ['driver'=>'memcached']. host,port,timeout,prefix Keys are Optional
-     * @return void
-     */
-    public static function config(null|PDO|Redis|Memcached $instance = null, array $args = ['prefix' => 'LK']): void
-    {
-        SessionManager::config($instance, $args);
-    }
-
-    /**
-     * Set Session Options
-     * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
-     * @return void
-     */
-    public static function setOptions(array $options): void
-    {
-        SessionManager::setOptions($options);
-    }
-
-    /**
-     * Set Session Cookies
-     * @param array $cookies. Example ['name'=>'PHPSESSID'] and any other session options
-     * @return void
-     */
-    public static function setCookies(array $cookies): void
-    {
-        SessionManager::setCookies($cookies);
-    }
-
     /**
      * Set Session Key & Values
      * @param string|array $key Required Argument as key name or array with key & value
@@ -67,9 +27,7 @@ class Session
     public static function set(string|array $key, mixed $value = null, string $for = 'APP'): void
     {
         SessionManager::start();
-        if (is_string($key)) {
-            $arr = [$key => $value];
-        }
+        if (is_string($key)) $arr = [$key => $value];
 
         $for = strtoupper(trim($for));
         foreach ($arr as $k => $v) {
