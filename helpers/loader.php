@@ -13,5 +13,5 @@ declare(strict_types=1);
 use Laika\Core\App\Resource;
 
 // Register Schema and Model
-Resource::register('schemas', __DIR__ . '/../src/Schema', "Laika\\Session");
-Resource::register('models', __DIR__ . '/../src/Model', "Laika\\Session");
+Resource::register('schemas', __DIR__ . '/../src/Schema', "Laika\\Session\\Schema");
+Resource::register('models', __DIR__ . '/../src/Model', "Laika\\Session\\Model");
