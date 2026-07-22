@@ -18,11 +18,15 @@ use Laika\Core\Abstracts\SchemaAbstract;
 
 class SessionSchema extends SchemaAbstract
 {
+    /** @var string Database Table Name */
     protected string $table = 'sessions';
+
+    /** @var string Database Connection Name */
+    protected string $connection = 'default';
 
     public function up(): void
     {
-        Schema::on()->createIfNotExists($this->table, function (Blueprint $table) {
+        Schema::on($this->connection)->createIfNotExists($this->table, function (Blueprint $table) {
             $table->string('id', 128);
             $table->blob('data');
             $table->timestamp('last_activity');
