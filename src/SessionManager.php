@@ -63,7 +63,7 @@ class SessionManager
      * File Session: Ignore This Parameter.
      * @return void
      */
-    public static function dbSessionConfig(?string $connection): void
+    public static function dbSessionConfig(?string $connection = null): void
     {
         if (self::$configuared) return;
 
@@ -76,6 +76,15 @@ class SessionManager
         self::$cookies = self::defaultCookies();
         self::$configuared = true;
         return;
+    }
+
+    /**
+     * Check Session is Configuared
+     * @return bool
+     */
+    public static function isConfiguarded(): bool
+    {
+        return self::$configuared;
     }
 
     /**
