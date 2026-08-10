@@ -1,13 +1,19 @@
 {
     "name": "laikait/laika-session",
     "description": "A php singleton file,pdo,redis or memcached session handler.",
-    "keywords": ["php", "session", "singleton", "redis", "pdo", "memcached", "handler"],
+    "keywords": [
+        "php",
+        "session",
+        "singleton",
+        "redis",
+        "pdo",
+        "memcached",
+        "handler",
+        "framework"
+    ],
     "type": "library",
     "license": "MIT",
     "autoload": {
-        "files": [
-            "helpers/loader.php"
-        ],
         "psr-4": {
             "Laika\\Session\\": "src/"
         }
@@ -31,7 +37,31 @@
         "laika": {
             "relays": [
                 "Laika\\Session\\Relay\\SessionRelay"
-            ]
+            ],
+            "resources": {
+                "models": {
+                    "path": "src/Model",
+                    "namespace": "Laika\\Session\\Model"
+                },
+                "schemas": {
+                    "path": "src/Schema",
+                    "namespace": "Laika\\Session\\Schema",
+                    "contract": "Laika\\Core\\Contract\\SchemaContract"
+                }
+            }
         }
+    },
+    "require-dev": {
+        "squizlabs/php_codesniffer": "^4.0.2",
+        "phpcompatibility/php-compatibility": "dev-develop",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "compat": "phpcs --standard=phpcs.xml --report=full"
     }
 }
