@@ -14,7 +14,7 @@ namespace Laika\Session\Schema;
 
 use Laika\Model\Schema\Schema;
 use Laika\Model\Schema\Blueprint;
-use Laika\Core\Abstracts\SchemaAbstract;
+use Laika\Model\Contract\SchemaAbstract;
 
 class SessionSchema extends SchemaAbstract
 {
