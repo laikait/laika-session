@@ -33,6 +33,9 @@ class SessionSchema extends SchemaAbstract
 
             // Indexes
             $table->primary('id');
+
+            // gc() sweeps on last_activity every time it runs.
+            $table->index('last_activity');
         });
     }
 }
