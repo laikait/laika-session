@@ -14,32 +14,28 @@ namespace Laika\Session;
 
 class Session
 {
-     ##################################################################################
-     ################################### PUBLIC API ###################################
-     ##################################################################################
+     ########################################################################
+     /*=========================== EXTERNAL API ===========================*/
+     ########################################################################
     /**
      * Set Session Key & Values
-     * @param string|array $key Required Argument as key name or array with key & value
-     * @param mixed $value Optional Argument. If $name is string this Param is Required.
-     * @param string $for Optional Argument. It Will Set Data Like $_SESSION[$for][$key]. Default is 'APP'
+     * @param string $key Session Key Name
+     * @param mixed $value Session Key Value
+     * @param string $for Session Set For. Example: $_SESSION[$for][$key] = $value;
      * @return void
      */
-    public static function set(string|array $key, mixed $value = null, string $for = 'APP'): void
+    public static function set(string $key, mixed $value, string $for = 'APP'): void
     {
         SessionManager::start();
-        if (is_string($key)) $arr = [$key => $value];
-
         $for = strtoupper(trim($for));
-        foreach ($arr as $k => $v) {
-            $_SESSION[$for][$k] = $v;
-        }
+        $_SESSION[$for][$key] = $value;
     }
 
     /**
      * Get Session Value From Key
-     * @param string $key Required Argument
-     * @param mixed $default Default Value To Return. Default is null
-     * @param string $for Optional Argument. It Will Get Data Like $_SESSION[$for][$key]. Default is 'APP'
+     * @param string $key Session Key Name
+     * @param mixed $default Session Default Key Value
+     * @param string $for Session Get For. Example: $_SESSION[$for][$key] = $value;
      * @return mixed
      */
     public static function get(string $key, mixed $default = null, string $for = 'APP'): mixed
@@ -83,6 +79,11 @@ class Session
      */
     public static function purge(string $for = 'APP'): void
     {
+        // Without this the purge silently does nothing when it is the first
+        // session call of the request: $_SESSION is not populated yet, so the
+        // isset() below is false and there is nothing to unset.
+        SessionManager::start();
+
         $for = strtoupper(trim($for));
         if (isset($_SESSION[$for])) {
             unset($_SESSION[$for]);
@@ -91,12 +92,13 @@ class Session
 
     /**
      * Get All Session Key & Values
+     * @param string $for Session Get For. Example: $_SESSION[$for];
      * @return array
      */
-    public static function all(): array
+    public static function getFor(string $for = 'APP'): array
     {
         SessionManager::start();
-        return $_SESSION;
+        return $_SESSION[strtoupper(trim($for))] ?? [];
     }
 
     /**
@@ -121,12 +123,12 @@ class Session
 
     /**
      * Get Session ID
-     * @return string
+     * @return string Empty string when there is no active session.
      */
     public static function id(): string
     {
         SessionManager::start();
-        return session_id();
+        return session_id() ?: '';
     }
 
     /**
@@ -136,6 +138,6 @@ class Session
     public static function name(): string
     {
         SessionManager::start();
-        return session_name();
+        return session_name() ?: '';
     }
 }

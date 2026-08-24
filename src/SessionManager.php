@@ -1,6 +1,6 @@
 <?php
 /**
- * Laika Database Session
+ * Laika Session
  * Author: Showket Ahmed
  * Email: riyadhtayf@gmail.com
  * License: MIT
@@ -12,134 +12,137 @@ declare(strict_types=1);
 
 namespace Laika\Session;
 
-use Laika\Session\Handler\PDOHandler;
-use Laika\Session\Handler\FileHandler;
-use Laika\Session\Interface\SessionDriverInterface;
+use Laika\Session\Handler\HandlerFactory;
+use Laika\Session\Contracts\SessionDriverInterface;
 use Laika\Session\Exceptions\SessionHandlerException;
 
+/**
+ * Session Manager
+ *
+ * Reads the driver SessionConfig selected, builds it, and runs the session lifecycle.
+ * Configuration lives in SessionConfig; this class only starts and stops.
+ */
 class SessionManager
 {
-    /** @var SessionDriverInterface $handler */
-    protected static SessionDriverInterface $handler;
+    /** @var ?SessionDriverInterface $handler Built lazily on the first start(). */
+    protected static ?SessionDriverInterface $handler = null;
 
-    /** @var bool $started. Default is false */
+    /** @var bool $started Default is false */
     protected static bool $started = false;
 
-    /** @var bool $configuared. Default is false */
-    protected static bool $configuared = false;
-
-    /** @var array<string,mixed> $options. Session Start Options */
-    protected static array $options;
-
-    /** @var array<string,mixed> $cookies. Session Cookie Parameters */
-    protected static array $cookies;
+    /** @var bool $prepared Whether the handler's setup() has already run this process. */
+    protected static bool $prepared = false;
 
     /**
-     * Session Config File Handler
-     * @param array $params Example: ['path' => '/session_path/', 'prefix' => 'LK']
-     * File Session: Ignore This Parameter.
+     * Start the session. Safe to call repeatedly; the session starts once.
      * @return void
      */
-    public static function fileSessionConfig(array $params = []): void
-    {
-        if (self::$configuared) return;
-        
-        $params = array_merge(['prefix' => 'LK'], $params);
-
-        // Set Session Handler
-        self::$handler = new FileHandler($params);
-
-        // Default Session Options
-        self::$options = self::defaultOptions();
-        // Default Session Cookies
-        self::$cookies = self::defaultCookies();
-        self::$configuared = true;
-        return;
-    }
-
-    /**
-     * Session Config Database Handler
-     * @param ?string $connection Connection name. Example: null / 'default'
-     * File Session: Ignore This Parameter.
-     * @return void
-     */
-    public static function dbSessionConfig(?string $connection = null): void
-    {
-        if (self::$configuared) return;
-
-        // Set Session Handler
-        self::$handler = new PDOHandler($connection);
-
-        // Default Session Options
-        self::$options = self::defaultOptions();
-        // Default Session Cookies
-        self::$cookies = self::defaultCookies();
-        self::$configuared = true;
-        return;
-    }
-
-    /**
-     * Check Session is Configuared
-     * @return bool
-     */
-    public static function isConfiguarded(): bool
-    {
-        return self::$configuared;
-    }
-
-    /**
-     * Set Session Options
-     * @param array $options. Example ['name'=>'PHPSESSID'] and any other session options
-     */
-    public static function setOptions(array $options): void
-    {
-        if (!isset(self::$options)) {
-            throw new SessionHandlerException('Call SessionManager::config() Before Set Options.');
-        }
-        self::$options = array_merge(self::$options, $options);
-        return;
-    }
-
-    // Set Session Cookies
-    /**
-     * @param array $cookies. Example ['path'=>'/'] and any other session cookies
-     */
-    public static function setCookies(array $cookies): void
-    {
-        if (!isset(self::$options)) {
-            throw new SessionHandlerException('Call SessionManager::config() Before Set Cookies.');
-        }
-        self::$cookies = array_merge(self::$cookies, $cookies);
-        return;
-    }
-
-    // Start Session
     public static function start(): void
     {
-        if (!isset(self::$handler)) {
-            throw new SessionHandlerException('Call SessionManager::config() before starting the session.');
+        if (static::$started || session_status() === PHP_SESSION_ACTIVE) {
+            static::$started = true;
+            return;
         }
-        if (!self::$started && (session_status() !== PHP_SESSION_ACTIVE)) {
-            self::$handler->setup();
-            session_set_save_handler(self::$handler, true);
 
-            // Session Cookies
-            session_set_cookie_params(self::$cookies);
+        $handler = static::handler();
 
-            // Session Start
-            session_start(self::$options);
-            self::$started = true;
+        // Creating the table is a one-off, not a per-request round trip, and it
+        // needs DDL privileges the runtime user should not normally hold.
+        if (!static::$prepared) {
+            $handler->setup();
+            static::$prepared = true;
         }
-        return;
+
+        session_set_save_handler($handler, true);
+
+        // Cookie params are meaningless when the session is not cookie-backed,
+        // and PHP >= 8.2.33 warns about setting them. clearCookie() guards on
+        // the same ini for the same reason.
+        if (ini_get('session.use_cookies')) {
+            session_set_cookie_params(SessionConfig::cookies());
+        }
+
+        // A failed start must not be recorded as a started session, or every
+        // later call assumes a session that is not there.
+        static::$started = session_start(SessionConfig::options());
     }
 
-    // Session End
+    /**
+     * Whether a driver has been selected.
+     * @return bool
+     */
+    public static function isConfigured(): bool
+    {
+        return SessionConfig::isConfigured();
+    }
+
+    /**
+     * Whether the session is currently active.
+     * @return bool
+     */
+    public static function isStarted(): bool
+    {
+        return static::$started && session_status() === PHP_SESSION_ACTIVE;
+    }
+
+    /**
+     * The active driver, built on demand.
+     * @return SessionDriverInterface
+     */
+    public static function handler(): SessionDriverInterface
+    {
+        if (static::$handler !== null) {
+            return static::$handler;
+        }
+
+        $driver = SessionConfig::driver();
+        if ($driver === null) {
+            throw new SessionHandlerException(
+                'No session driver configured. Call SessionConfig::file(), SessionConfig::redis(), SessionConfig::memcached(), '
+                . 'SessionConfig::mysql() or SessionConfig::model() before starting the session.'
+            );
+        }
+
+        $params = SessionConfig::params();
+
+        // The cache drivers expire keys themselves, so they need the lifetime
+        // that the rest of the session already runs on.
+        $params += ['lifetime' => (int) (SessionConfig::options()['gc_maxlifetime'] ?? 1440)];
+
+        return static::$handler = HandlerFactory::make($driver, $params);
+    }
+
+    /**
+     * Destroy the session and clear its cookie.
+     * @return bool
+     */
     public static function destroy(): bool
     {
-        self::start();
+        static::start();
+
+        $_SESSION = [];
         session_unset();
-        self::$started = false;
-        return session_destroy();
+
+        // session_destroy() drops the server-side data but leaves the cookie in
+        // the browser, so the client keeps presenting a dead session id.
+        static::clearCookie();
+
+        $destroyed       = session_destroy();
+        static::$started = false;
+
+        return $destroyed;
+    }
+
+    /**
+     * Forget the built handler and the started flag.
+     * Intended for tests, which need to rebuild static state between cases.
+     * @return void
+     */
+    public static function reset(): void
+    {
+        static::$handler  = null;
+        static::$started  = false;
+        static::$prepared = false;
     }
 
     ########################################################################
@@ -147,30 +150,19 @@ class SessionManager
     ########################################################################
 
     /**
-     * @return array<string,mixed> Default Session Options
+     * Expire the session cookie in the browser.
+     * @return void
      */
-    protected static function defaultOptions(): array
+    protected static function clearCookie(): void
     {
-        return [
-            'name'              =>  'LAIKA',
-            'use_only_cookies'	=>	true,
-            'use_strict_mode'	=>	true,
-            'gc_probability'	=>	1,
-            'gc_divisor'		=>	100,
-            'gc_maxlifetime'	=>	1440
-        ];
-    }
+        if (headers_sent() || !ini_get('session.use_cookies')) {
+            return;
+        }
 
-    /**
-     * @return array<string,mixed> Default Session Cookies
-     */
-    protected static function defaultCookies(): array
-    {
-        return [
-            "path"      =>  '/',
-            "secure"    =>  true,
-            "httponly"  =>  true,
-            "samesite"  =>  "Strict"
-        ];
+        $params = session_get_cookie_params();
+        $params['expires'] = time() - 42000;
+        unset($params['lifetime']);
+
+        setcookie(session_name(), '', $params);
     }
 }

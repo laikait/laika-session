@@ -23,6 +23,37 @@ jobs:
       matrix:
         php-version: ['8.1','8.2','8.3','8.4','8.5']
 
+    # The driver tests skip themselves when their backend is unreachable, so
+    # without these services the suite would go green having tested nothing.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: laika_session_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      memcached:
+        image: memcached:1.6
+        ports:
+          - 11211:11211
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -31,6 +62,7 @@ jobs:
         uses: shivammathur/setup-php@accd6127cb78bee3e8082180cb391013d204ef9f # v2
         with:
           php-version: ${{ matrix.php-version }}
+          extensions: pdo, pdo_mysql, redis, memcached
           tools: composer
 
       # Validate composer.json
@@ -40,7 +72,7 @@ jobs:
       # Lint PHP Syntax
       - name: Lint PHP syntax
         run: |
-          find src -name '*.php' -print0 | xargs -0 -n1 php -l
+          find src tests -name '*.php' -print0 | xargs -0 -n1 php -l
 
       # Install Dev Tooling
       # --prefer-dist pulls zipballs from api.github.com and disables source
@@ -55,6 +87,23 @@ jobs:
       # later version, signatures that changed, behaviour flagged for removal.
       - name: PHPCompatibility check (8.1-8.5)
         run: vendor/bin/phpcs --standard=phpcs.xml --report=full
+
+      - name: PHPUnit
+        env:
+          LAIKA_SESSION_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=laika_session_test;charset=utf8mb4'
+          LAIKA_SESSION_USER: root
+          LAIKA_SESSION_PASS: ''
+          # The model driver resolves connections by name through
+          # Laika\Model\Connection, so it takes discrete parts rather than a DSN.
+          # Same database as the mysql driver -- both share the sessions table.
+          LAIKA_SESSION_MYSQL_HOST: 127.0.0.1
+          LAIKA_SESSION_MYSQL_PORT: 3306
+          LAIKA_SESSION_MYSQL_DB: laika_session_test
+          LAIKA_SESSION_REDIS_HOST: 127.0.0.1
+          LAIKA_SESSION_REDIS_PORT: 6379
+          LAIKA_SESSION_MEMCACHED_HOST: 127.0.0.1
+          LAIKA_SESSION_MEMCACHED_PORT: 11211
+        run: vendor/bin/phpunit
 
       - name: Report result
         if: success()

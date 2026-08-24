@@ -21,8 +21,9 @@ class SessionSchema extends SchemaAbstract
     /** @var string Database Table Name */
     protected string $table = 'sessions';
 
-    /** @var string Database Connection Name */
-    protected string $connection = 'default';
+    // The connection is not declared here on purpose. SchemaAbstract's
+    // constructor assigns it (falling back to 'default'), so redeclaring it
+    // with a value here only suggests the connection is fixed when it is not.
 
     public function up(): void
     {
@@ -33,6 +34,9 @@ class SessionSchema extends SchemaAbstract
 
             // Indexes
             $table->primary('id');
+
+            // gc() sweeps on last_activity every time it runs.
+            $table->index('last_activity');
         });
     }
 }
