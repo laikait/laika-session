@@ -27,6 +27,9 @@ class ModelHandler implements SessionDriverInterface
     /** @var SessionModel $model */
     protected SessionModel $model;
 
+    /** @var ?string $connection Connection name, null for laika-model's default. */
+    protected ?string $connection;
+
     /** @var bool $install Whether setup() should create the table. */
     protected bool $install;
 
@@ -37,15 +40,20 @@ class ModelHandler implements SessionDriverInterface
     {
         $connection = $params['connection'] ?? null;
 
-        $this->model   = new SessionModel(is_string($connection) ? $connection : null);
-        $this->install = (bool) ($params['install'] ?? false);
+        $this->connection = is_string($connection) ? $connection : null;
+        $this->model      = new SessionModel($this->connection);
+        $this->install    = (bool) ($params['install'] ?? false);
     }
 
     // Create the table when explicitly asked to
     public function setup(): void
     {
         if ($this->install) {
-            (new SessionSchema())->up();
+            // The schema has to target the same connection the model reads and
+            // writes on. Constructing it bare pins it to 'default', so a session
+            // configured for another connection created its table in the wrong
+            // database -- or failed outright when 'default' was never registered.
+            (new SessionSchema($this->connection))->up();
         }
     }
 

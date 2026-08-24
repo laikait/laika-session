@@ -370,10 +370,11 @@ vendor/bin/phpunit
 Driver tests skip themselves when their backend is unreachable. Point them at real servers with:
 
 ```bash
-LAIKA_SESSION_DSN, LAIKA_SESSION_USER, LAIKA_SESSION_PASS       # mysql
-LAIKA_SESSION_REDIS_HOST, LAIKA_SESSION_REDIS_PORT              # redis
-LAIKA_SESSION_MEMCACHED_HOST, LAIKA_SESSION_MEMCACHED_PORT      # memcached
-LAIKA_SESSION_MODEL_CONNECTION                                  # model
+LAIKA_SESSION_DSN, LAIKA_SESSION_USER, LAIKA_SESSION_PASS        # mysql
+LAIKA_SESSION_MYSQL_HOST, LAIKA_SESSION_MYSQL_PORT               # model
+LAIKA_SESSION_MYSQL_DB, LAIKA_SESSION_USER, LAIKA_SESSION_PASS   # model
+LAIKA_SESSION_REDIS_HOST, LAIKA_SESSION_REDIS_PORT               # redis
+LAIKA_SESSION_MEMCACHED_HOST, LAIKA_SESSION_MEMCACHED_PORT       # memcached
 ```
 
 Compatibility across PHP 8.1–8.5:

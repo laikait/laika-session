@@ -38,12 +38,12 @@
     "minimum-stability": "stable",
     "require": {
         "php": ">=8.1",
-        "ext-pdo": "*",
-        "laikait/laika-model": "^4"
+        "ext-pdo": "*"
     },
     "suggest": {
-        "ext-redis": "Required by the redis session driver (Config::redis()).",
-        "ext-memcached": "Required by the memcached session driver (Config::memcached())."
+        "ext-redis": "Required by the redis session driver (SessionConfig::redis()).",
+        "ext-memcached": "Required by the memcached session driver (SessionConfig::memcached()).",
+        "laikait/laika-model": "Required by model session driver(SessionConfig::model())."
     },
     "prefer-stable": true,
     "extra": {

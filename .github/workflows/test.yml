@@ -98,6 +98,12 @@ jobs:
           LAIKA_SESSION_DSN: 'mysql:host=127.0.0.1;port=3306;dbname=laika_session_test;charset=utf8mb4'
           LAIKA_SESSION_USER: root
           LAIKA_SESSION_PASS: ''
+          # The model driver resolves connections by name through
+          # Laika\Model\Connection, so it takes discrete parts rather than a DSN.
+          # Same database as the mysql driver -- both share the sessions table.
+          LAIKA_SESSION_MYSQL_HOST: 127.0.0.1
+          LAIKA_SESSION_MYSQL_PORT: 3306
+          LAIKA_SESSION_MYSQL_DB: laika_session_test
           LAIKA_SESSION_REDIS_HOST: 127.0.0.1
           LAIKA_SESSION_REDIS_PORT: 6379
           LAIKA_SESSION_MEMCACHED_HOST: 127.0.0.1

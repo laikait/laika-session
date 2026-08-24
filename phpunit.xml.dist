@@ -6,7 +6,12 @@
          cacheDirectory=".phpunit.cache"
          failOnWarning="true"
          failOnRisky="true"
-         beStrictAboutOutputDuringTests="true">
+         beStrictAboutOutputDuringTests="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerErrors="true"
+         displayDetailsOnTestsThatTriggerNotices="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnPhpunitDeprecations="true">
     <testsuites>
         <testsuite name="Laika Session">
             <directory>tests</directory>
