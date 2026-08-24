@@ -6,11 +6,6 @@ on:
       - beta
       - main
 
-  pull_request:
-    branches:
-      - beta
-      - main
-
   workflow_dispatch:
 
 jobs:
