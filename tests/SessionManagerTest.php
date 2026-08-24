@@ -130,6 +130,36 @@ class SessionManagerTest extends TestCase
     }
 
     #[Test]
+    public function cookie_params_are_applied_when_cookies_are_enabled(): void
+    {
+        // start() skips session_set_cookie_params() when session.use_cookies is
+        // disabled, because PHP >= 8.2.33 warns about it. This proves the guard
+        // skips the warning without also disabling the feature.
+        $original = ini_get('session.use_cookies');
+        ini_set('session.use_cookies', '1');
+
+        try {
+            $this->configureFile();
+            SessionConfig::cookies(['path' => '/app', 'samesite' => 'Lax']);
+            SessionManager::start();
+
+            $params = session_get_cookie_params();
+
+            $this->assertSame('/app', $params['path']);
+            $this->assertSame('Lax', $params['samesite']);
+        } finally {
+            // Session ini settings cannot be changed while a session is active,
+            // so close it before restoring rather than leaving the ini altered
+            // for every test that follows.
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                session_abort();
+            }
+
+            ini_set('session.use_cookies', $original);
+        }
+    }
+
+    #[Test]
     public function the_cache_lifetime_reaches_the_driver(): void
     {
         // The cache drivers expire keys themselves, so they have to inherit the

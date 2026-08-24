@@ -54,7 +54,13 @@ class SessionManager
         }
 
         session_set_save_handler($handler, true);
-        session_set_cookie_params(SessionConfig::cookies());
+
+        // Cookie params are meaningless when the session is not cookie-backed,
+        // and PHP >= 8.2.33 warns about setting them. clearCookie() guards on
+        // the same ini for the same reason.
+        if (ini_get('session.use_cookies')) {
+            session_set_cookie_params(SessionConfig::cookies());
+        }
 
         // A failed start must not be recorded as a started session, or every
         // later call assumes a session that is not there.
