@@ -46,21 +46,6 @@
         "laikait/laika-model": "Required by model session driver(SessionConfig::model())."
     },
     "prefer-stable": true,
-    "extra": {
-        "laika": {
-            "resources": {
-                "models": {
-                    "path": "src/Model",
-                    "namespace": "Laika\\Session\\Model"
-                },
-                "schemas": {
-                    "path": "src/Schema",
-                    "namespace": "Laika\\Session\\Schema",
-                    "contract": "Laika\\Model\\Contract\\SchemaAbstract"
-                }
-            }
-        }
-    },
     "require-dev": {
         "squizlabs/php_codesniffer": "^4.0.2",
         "phpcompatibility/php-compatibility": "dev-develop",
