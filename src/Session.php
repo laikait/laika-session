@@ -14,91 +14,77 @@ namespace Laika\Session;
 
 class Session
 {
-     ########################################################################
-     /*=========================== EXTERNAL API ===========================*/
-     ########################################################################
+    ########################################################################
+    /*=========================== EXTERNAL API ===========================*/
+    ########################################################################
     /**
-     * Set Session Key & Values
+     * Session Scope
+     * @param string $name Scope Name. Default is 'APP'. Example: Session::scope('AUTH')->set('token', $token);
+     * @return Scope
+     */
+    public static function scope(string $name = 'APP'): Scope
+    {
+        return new Scope($name);
+    }
+
+    /**
+     * Set Session Key & Value in The 'APP' Scope
      * @param string $key Session Key Name
      * @param mixed $value Session Key Value
-     * @param string $for Session Set For. Example: $_SESSION[$for][$key] = $value;
      * @return void
      */
-    public static function set(string $key, mixed $value, string $for = 'APP'): void
+    public static function set(string $key, mixed $value): void
     {
-        SessionManager::start();
-        $for = strtoupper(trim($for));
-        $_SESSION[$for][$key] = $value;
+        static::scope()->set($key, $value);
     }
 
     /**
-     * Get Session Value From Key
+     * Get Session Value From Key in The 'APP' Scope
      * @param string $key Session Key Name
-     * @param mixed $default Session Default Key Value
-     * @param string $for Session Get For. Example: $_SESSION[$for][$key] = $value;
+     * @param mixed $default Returned When The Key is Missing
      * @return mixed
      */
-    public static function get(string $key, mixed $default = null, string $for = 'APP'): mixed
+    public static function get(string $key, mixed $default = null): mixed
     {
-        SessionManager::start();
-        $for = strtoupper(trim($for));
-        return $_SESSION[$for][$key] ?? $default;
+        return static::scope()->get($key, $default);
     }
 
     /**
-     * Check Session Key Exist
-     * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Check Data Like $_SESSION[$for][$key].
+     * Check Session Key Exist in The 'APP' Scope
+     * @param string $key Session Key Name
      * @return bool
      */
-    public static function has(string $key, string $for = 'APP'): bool
+    public static function has(string $key): bool
     {
-        SessionManager::start();
-        $for = strtoupper(trim($for));
-        return isset($_SESSION[$for][$key]);
+        return static::scope()->has($key);
     }
 
     /**
-     * Remove Session Key if Exist
-     * @param string $key Required Argument
-     * @param string $for Optional Argument. It Will Remove Data If $_SESSION[$for][$key] Exist.
+     * Remove Session Key From The 'APP' Scope if Exist
+     * @param string $key Session Key Name
      * @return void
      */
-    public static function pop(string $key, string $for = 'APP'): void
+    public static function pop(string $key): void
     {
-        $for = strtoupper(trim($for));
-        if (self::has($key, $for)) {
-            unset($_SESSION[$for][$key]);
-        }
+        static::scope()->pop($key);
     }
 
     /**
-     * Session Purge
-     * @param string $for Optional Argument. It Will Purge Data Like $_SESSION[$for]. Default is 'APP'
+     * Remove Every Key in The 'APP' Scope
      * @return void
      */
-    public static function purge(string $for = 'APP'): void
+    public static function purge(): void
     {
-        // Without this the purge silently does nothing when it is the first
-        // session call of the request: $_SESSION is not populated yet, so the
-        // isset() below is false and there is nothing to unset.
-        SessionManager::start();
-
-        $for = strtoupper(trim($for));
-        if (isset($_SESSION[$for])) {
-            unset($_SESSION[$for]);
-        }
+        static::scope()->purge();
     }
 
     /**
-     * Get All Session Key & Values
-     * @param string $for Session Get For. Example: $_SESSION[$for];
+     * Get Every Key & Value in The 'APP' Scope
      * @return array
      */
-    public static function getFor(string $for = 'APP'): array
+    public static function all(): array
     {
-        SessionManager::start();
-        return $_SESSION[strtoupper(trim($for))] ?? [];
+        return static::scope()->all();
     }
 
     /**

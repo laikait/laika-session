@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Laika\Session\Tests;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Laika\Session\SessionConfig;
@@ -51,28 +52,56 @@ class SessionTest extends TestCase
     }
 
     #[Test]
-    public function a_value_is_scoped_to_its_namespace(): void
+    public function a_value_is_confined_to_its_scope(): void
     {
-        Session::set('token', 'abc123', 'AUTH');
+        Session::scope('AUTH')->set('token', 'abc123');
 
-        $this->assertSame('abc123', Session::get('token', null, 'AUTH'));
+        $this->assertSame('abc123', Session::scope('AUTH')->get('token'));
         $this->assertNull(Session::get('token'));
+    }
+
+    #[Test]
+    public function the_facade_uses_the_app_scope(): void
+    {
+        Session::set('a', 1);
+
+        $this->assertSame(1, Session::scope('APP')->get('a'));
+        $this->assertSame('APP', Session::scope()->name());
     }
 
     #[Test]
     public function get_returns_the_default_when_the_key_is_missing(): void
     {
         $this->assertSame('fallback', Session::get('nope', 'fallback'));
+        $this->assertSame('fallback', Session::scope('AUTH')->get('nope', 'fallback'));
     }
 
     #[Test]
-    public function namespaces_do_not_collide(): void
+    public function scopes_do_not_collide(): void
     {
-        Session::set('id', 42, 'USER');
-        Session::set('id', 99, 'CART');
+        Session::scope('USER')->set('id', 42);
+        Session::scope('CART')->set('id', 99);
 
-        $this->assertSame(42, Session::get('id', null, 'USER'));
-        $this->assertSame(99, Session::get('id', null, 'CART'));
+        $this->assertSame(42, Session::scope('USER')->get('id'));
+        $this->assertSame(99, Session::scope('CART')->get('id'));
+    }
+
+    #[Test]
+    public function scope_names_are_trimmed_and_uppercased(): void
+    {
+        Session::scope('auth')->set('token', 'abc123');
+
+        $this->assertSame('abc123', Session::scope(' Auth ')->get('token'));
+        $this->assertSame('abc123', Session::scope('AUTH')->get('token'));
+        $this->assertSame('AUTH', Session::scope('auth')->name());
+    }
+
+    #[Test]
+    public function an_empty_scope_name_is_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Session::scope('   ');
     }
 
     #[Test]
@@ -87,15 +116,32 @@ class SessionTest extends TestCase
     }
 
     #[Test]
-    public function purge_clears_one_namespace(): void
+    public function pop_removes_a_key_holding_null(): void
     {
-        Session::set('a', 1, 'APP');
-        Session::set('b', 2, 'AUTH');
+        Session::set('a', null);
+        Session::pop('a');
 
-        Session::purge('APP');
+        $this->assertArrayNotHasKey('a', Session::all());
+    }
+
+    #[Test]
+    public function pop_starts_the_session_when_called_first(): void
+    {
+        Session::scope('AUTH')->pop('token');
+
+        $this->assertTrue(SessionManager::isStarted());
+    }
+
+    #[Test]
+    public function purge_clears_one_scope(): void
+    {
+        Session::set('a', 1);
+        Session::scope('AUTH')->set('b', 2);
+
+        Session::purge();
 
         $this->assertFalse(Session::has('a'));
-        $this->assertTrue(Session::has('b', 'AUTH'));
+        $this->assertTrue(Session::scope('AUTH')->has('b'));
     }
 
     #[Test]
@@ -103,21 +149,21 @@ class SessionTest extends TestCase
     {
         // purge() was the only mutator that skipped SessionManager::start(),
         // so as the first call of a request it silently did nothing.
-        Session::purge('APP');
+        Session::purge();
 
         $this->assertTrue(SessionManager::isStarted());
     }
 
     #[Test]
-    public function get_for_returns_one_namespace(): void
+    public function all_returns_one_scope(): void
     {
-        Session::set('a', 1, 'APP');
-        Session::set('b', 2, 'AUTH');
+        Session::set('a', 1);
+        Session::scope('AUTH')->set('b', 2);
 
-        $this->assertSame(['a' => 1], Session::getFor('APP'));
-        $this->assertSame(['a' => 1], Session::getFor());
-        $this->assertSame(['b' => 2], Session::getFor('AUTH'));
-        $this->assertSame([], Session::getFor('NOPE'));
+        $this->assertSame(['a' => 1], Session::all());
+        $this->assertSame(['a' => 1], Session::scope('APP')->all());
+        $this->assertSame(['b' => 2], Session::scope('AUTH')->all());
+        $this->assertSame([], Session::scope('NOPE')->all());
     }
 
     #[Test]
@@ -133,6 +179,7 @@ class SessionTest extends TestCase
     public function data_survives_a_write_and_reopen(): void
     {
         Session::set('user_id', 42);
+        Session::scope('AUTH')->set('token', 'abc123');
         $id = Session::id();
 
         session_write_close();
@@ -142,5 +189,6 @@ class SessionTest extends TestCase
         SessionManager::start();
 
         $this->assertSame(42, Session::get('user_id'));
+        $this->assertSame('abc123', Session::scope('AUTH')->get('token'));
     }
 }
