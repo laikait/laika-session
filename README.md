@@ -2,6 +2,8 @@
 
 A PHP session package for the Laika Framework with **file**, **redis**, **memcached**, **mysql**, and **Laika Model** drivers behind a clean static facade.
 
+**Full documentation:** [docs/](docs/README.md), covering drivers, configuration, the Session API, deployment (including PHP-FPM) and reference material.
+
 ## Requirements
 
 - PHP `>= 8.1`
@@ -187,27 +189,19 @@ All methods are static and available on the `Session` facade. Each one starts th
 
 ### `Session::set()`
 
-Store one or many values. Data is namespaced under a `$for` key (default `APP`).
+Store one value in the `APP` scope. Use [`Session::scope()`](#sessionscope) for any other scope.
 
 ```php
-// Single value
 Session::set('user_id', 42);
-
-// Custom namespace
-Session::set('token', 'abc123', 'AUTH');
-
 ```
 
 ### `Session::get()`
 
 Retrieve a value. Returns `$default` (or `null`) when the key is missing.
 
-**Signature:** `get(string $key, mixed $default = null, string $for = 'APP')` — the namespace is the *third* argument, not the second.
-
 ```php
-$userId = Session::get('user_id');                // from 'APP'
-$token  = Session::get('token', null, 'AUTH');    // from 'AUTH'
-$role   = Session::get('role', 'guest');          // with a default
+$userId = Session::get('user_id');
+$role   = Session::get('role', 'guest'); // with a default
 ```
 
 ### `Session::has()`
@@ -224,28 +218,38 @@ Remove a key if it exists.
 
 ```php
 Session::pop('flash_message');
-Session::pop('token', 'AUTH');
 ```
 
 ### `Session::purge()`
 
-Clear an entire namespace.
+Clear the whole `APP` scope.
 
 ```php
-Session::purge();        // clears 'APP'
-Session::purge('AUTH');  // clears 'AUTH'
+Session::purge();
 ```
 
-### `Session::getFor()`
+### `Session::all()`
 
-Return every key in one namespace.
+Return every key in the `APP` scope, or an empty array when it holds nothing.
 
 ```php
-$app  = Session::getFor();        // the 'APP' namespace
-$auth = Session::getFor('AUTH');  // a named namespace
+$app = Session::all();
 ```
 
-Returns an empty array when the namespace holds nothing.
+### `Session::scope()`
+
+Returns a `Laika\Session\Scope` with the same methods (`set`, `get`, `has`, `pop`, `purge`, `all`) for a named scope.
+
+```php
+$auth = Session::scope('AUTH');
+
+$auth->set('token', 'abc123');
+$auth->get('token');          // 'abc123'
+$auth->has('token');          // true
+$auth->pop('token');
+$auth->purge();
+$auth->all();                 // []
+```
 
 ### `Session::regenerate()`
 
@@ -273,19 +277,19 @@ Session::destroy();
 
 ---
 
-## Namespacing
+## Scopes
 
-Sessions are stored under a namespace key (`$for`) within `$_SESSION`, which prevents key collisions when several parts of an application share one session.
+Data is stored under a scope key within `$_SESSION` (`$_SESSION[<SCOPE>][$key]`), which prevents key collisions when several parts of an application share one session.
 
 ```php
-Session::set('id', 42, 'USER');
-Session::set('id', 99, 'CART');
+Session::scope('USER')->set('id', 42);
+Session::scope('CART')->set('id', 99);
 
-Session::get('id', null, 'USER'); // 42
-Session::get('id', null, 'CART'); // 99
+Session::scope('USER')->get('id'); // 42
+Session::scope('CART')->get('id'); // 99
 ```
 
-The default namespace is `APP`.
+The static `Session::` methods use the `APP` scope. Scope names are trimmed and uppercased (`'auth'` and `'AUTH'` are the same scope), and an empty name throws `InvalidArgumentException`.
 
 ---
 
@@ -333,6 +337,26 @@ if (Session::has('user_id')) {
 // On logout
 Session::destroy();
 ```
+
+---
+
+## Upgrading from v5
+
+`v6.0.0` removes the trailing `$for` parameter. Scopes other than `APP` go through `Session::scope()`.
+
+| v5                                  | v6                                   |
+|-------------------------------------|--------------------------------------|
+| `Session::set($key, $value, 'X')`   | `Session::scope('X')->set($key, $value)` |
+| `Session::get($key, $default, 'X')` | `Session::scope('X')->get($key, $default)` |
+| `Session::has($key, 'X')`           | `Session::scope('X')->has($key)`     |
+| `Session::pop($key, 'X')`           | `Session::scope('X')->pop($key)`     |
+| `Session::purge('X')`               | `Session::scope('X')->purge()`       |
+| `Session::getFor('X')`              | `Session::scope('X')->all()`         |
+| `Session::getFor()`                 | `Session::all()`                     |
+
+Calls without `$for` (`Session::set('k', $v)`, `Session::get('k')`, ...) are unchanged. Stored data is untouched, because scope names are normalized the same way `$for` was, so sessions written by v5 remain readable after the upgrade.
+
+A leftover v5 call does **not** error. PHP ignores extra arguments to user functions, so `Session::set($key, $value, 'X')` silently writes to `APP` instead of `X`. Search your code for these calls before upgrading.
 
 ---
 

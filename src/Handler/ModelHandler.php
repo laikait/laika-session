@@ -48,13 +48,10 @@ class ModelHandler implements SessionDriverInterface
     // Create the table when explicitly asked to
     public function setup(): void
     {
-        if ($this->install) {
-            // The schema has to target the same connection the model reads and
-            // writes on. Constructing it bare pins it to 'default', so a session
-            // configured for another connection created its table in the wrong
-            // database -- or failed outright when 'default' was never registered.
-            (new SessionSchema($this->connection))->up();
+        if (!$this->install) {
+            return;
         }
+        (new SessionSchema($this->connection))->up();
     }
 
     // Session Open
