@@ -109,7 +109,10 @@ class Session
 
     /**
      * Get Session ID
-     * @return string Empty string when there is no active session.
+     *
+     * Starts the session if it is not active yet, so it throws
+     * SessionHandlerException when no driver is configured.
+     * @return string Empty string only if the session failed to start.
      */
     public static function id(): string
     {
@@ -119,6 +122,8 @@ class Session
 
     /**
      * Get Session Name
+     *
+     * Starts the session if it is not active yet, like id().
      * @return string
      */
     public static function name(): string
