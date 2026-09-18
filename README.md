@@ -1,6 +1,6 @@
 # Laika Session
 
-A PHP session package for the Laika Framework with **file**, **redis**, **memcached**, **mysql**, and **Laika Model** drivers behind a clean static facade.
+A PHP session package for the Laika Framework with **file**, **redis**, **memcached**, **mysql**, and **Laika Model** drivers behind a single static `Session` class.
 
 **Full documentation:** [docs/](docs/README.md), covering drivers, configuration, the Session API, deployment (including PHP-FPM) and reference material.
 
@@ -185,7 +185,7 @@ SessionConfig::cookies([
 
 ## Session API
 
-All methods are static and available on the `Session` facade. Each one starts the session on demand.
+All methods are static and available on the `Session` class. Each one starts the session on demand.
 
 ### `Session::set()`
 
@@ -326,7 +326,7 @@ SessionConfig::mysql($pdo);
 SessionConfig::options(['name' => 'MY_APP', 'gc_maxlifetime' => 7200]);
 SessionConfig::cookies(['domain' => '.example.com']);
 
-// 3. Use the Session facade anywhere
+// 3. Use the Session class anywhere
 Session::set('user_id', 1);
 
 if (Session::has('user_id')) {
@@ -340,11 +340,11 @@ Session::destroy();
 
 ---
 
-## Upgrading from v5
+## Upgrading to v5.1
 
-`v6.0.0` removes the trailing `$for` parameter. Scopes other than `APP` go through `Session::scope()`.
+`v5.1.0` removes the trailing `$for` parameter. Scopes other than `APP` go through `Session::scope()`.
 
-| v5                                  | v6                                   |
+| v5.0                                | v5.1                                 |
 |-------------------------------------|--------------------------------------|
 | `Session::set($key, $value, 'X')`   | `Session::scope('X')->set($key, $value)` |
 | `Session::get($key, $default, 'X')` | `Session::scope('X')->get($key, $default)` |
