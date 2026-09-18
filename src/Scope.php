@@ -19,8 +19,8 @@ use InvalidArgumentException;
  *
  * One named slice of the session. Every key lives at $_SESSION[<SCOPE>][$key],
  * so unrelated parts of an application cannot overwrite each other's keys.
- * Names are trimmed and uppercased, the same normalisation v5's $for parameter
- * applied, so data written before v6 is still found.
+ * Names are trimmed and uppercased, the same normalisation v5.0's $for
+ * parameter applied, so data written before v5.1 is still found.
  */
 class Scope
 {
