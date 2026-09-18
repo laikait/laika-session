@@ -94,7 +94,7 @@ This empties `$_SESSION`, deletes the stored session and expires the cookie in t
 
 ## SessionManager
 
-`SessionManager` runs the lifecycle behind the facade:
+`SessionManager` runs the lifecycle behind the `Session` class:
 
 ```php
 use Laika\Session\SessionManager;

@@ -73,4 +73,4 @@ Init::file(['path' => APP_PATH . '/lf-storage/sessions']);
 
 - Pick a driver: [Drivers](02_drivers.md)
 - Tune the cookie and lifetime: [Configuration](03_configuration.md)
-- Everything the facade can do: [Session API](04_session-api.md)
+- Everything the `Session` class can do: [Session API](04_session-api.md)

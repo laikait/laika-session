@@ -7,7 +7,7 @@
 | [Getting Started](01_getting-started.md) | Requirements, installation, first session, use inside the framework |
 | [Drivers](02_drivers.md) | The five drivers, their parameters, the database table, locking behaviour |
 | [Configuration](03_configuration.md) | Session options, cookie parameters, the `secure` flag |
-| [Session API](04_session-api.md) | The `Session` facade, namespaces, `SessionManager` |
+| [Session API](04_session-api.md) | The `Session` class, namespaces, `SessionManager` |
 | [Deployment](05_deployment.md) | PHP-FPM, multiple servers, proxies, concurrency, garbage collection |
 | [Reference](06_reference.md) | Lifecycle, driver contract, exceptions, testing |
 
